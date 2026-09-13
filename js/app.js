@@ -359,6 +359,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const employees = allRecords.filter(r => r.type === "employee");
     const purchases = allRecords.filter(r => r.type === "purchase");
     const archived = allRecords.filter(r => r.type === "archived");
+    const interviews = allRecords.filter(r => r.type === "interview");
 
     const yellowCount = allRecords.filter(r => r.type !== "archived" && r.responsiveness === "yellow").length;
     const redCount = allRecords.filter(r => r.type !== "archived" && r.responsiveness === "red").length;
