@@ -1,0 +1,13 @@
+{
+  "name": "legacy-management-portal",
+  "version": "1.0.0",
+  "description": "Trainees, Employees and Purchase Tracker with Netlify Serverless Database",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server . -p 8080"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@netlify/blobs": "^7.0.0"
+  }
+}

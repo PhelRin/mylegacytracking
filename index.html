@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Management - Trainees, Employees & Purchase Tracker</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Security Gate / Lock Screen -->
+  <div id="auth-gate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-icon">🔒</div>
+      <h2>Legacy Management Portal</h2>
+      <p>Authorized personnel only. Please enter the security access password to continue.</p>
+
+      <form id="auth-form">
+        <div class="auth-input-wrapper">
+          <input type="password" id="auth-password" placeholder="Enter Access Password..." autocomplete="current-password" required>
+          <button type="button" id="btn-toggle-pw" class="btn-toggle-pw" title="Show/Hide Password">👁️</button>
+        </div>
+        <div id="auth-error" class="auth-error" style="display:none;">
+          ⚠️ Incorrect password. Access denied.
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit-btn">
+          🔓 Unlock Portal
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <small style="color:var(--text-muted);">Protected by Legacy Security Protocol</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">LM</div>
+      <div>
+        <h1>Legacy Management Portal</h1>
+        <p>Trainees, Employees & Purchase Tracker • Netlify Serverless DB</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <!-- Live Cloud Sync Indicator -->
+      <button id="btn-cloud-sync" class="btn btn-secondary cloud-sync-btn" title="Click to sync latest data with Netlify Cloud DB">
+        <span id="cloud-sync-icon">☁️</span> <span id="cloud-sync-text">Cloud Sync</span>
+      </button>
+
+      <!-- Notification Bell -->
+      <div class="notif-wrapper">
+        <button id="btn-notif-bell" class="btn btn-secondary notif-bell-btn">
+          🔔 <span id="notif-badge" class="notif-badge">0</span>
+        </button>
+        <!-- Notification Drawer Panel -->
+        <div id="notif-drawer" class="notif-drawer">
+          <div class="notif-header">
+            <h3>Notifications & Alerts</h3>
+            <span id="notif-count-text" style="font-size:0.75rem; color:var(--text-muted)">0 active alerts</span>
+          </div>
+          <div id="notif-list" class="notif-body">
+            <!-- Dynamically populated via app.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Hub Button (LM Studio via Ngrok) -->
+      <button id="btn-ai-hub" class="btn btn-secondary ai-hub-btn" title="LM Studio AI Assistant (Employee Reports & WhatsApp Outreach)">
+        🤖 AI Hub <span id="ai-status-indicator" class="ai-status-pill offline">Checking...</span>
+      </button>
+
+      <button id="btn-backup" class="btn btn-secondary" title="Cloud DB Settings & Backups (Admin Protected)">
+        🔒 Cloud DB
+      </button>
+
+      <button id="btn-lock-portal" class="btn btn-secondary" title="Lock Portal Immediately">
+        🔒 Lock
+      </button>
+
+      <button id="btn-add-interview" class="btn btn-secondary" title="Schedule Candidate Interview">
+        📅 + Interview
+      </button>
+
+      <button id="btn-add-purchase" class="btn btn-success">
+        + Add Purchase
+      </button>
+      <button id="btn-add-person" class="btn btn-primary">
+        + Add Person
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Dashboard Statistics Grid -->
+    <section class="stats-grid">
+      <div class="stat-card" id="card-trainees">
+        <div class="stat-icon trainees">🎓</div>
+        <div class="stat-info">
+          <h3 id="stat-trainees-count">0</h3>
+          <p>Active Trainees</p>
+        </div>
+      </div>
+
+      <div class="stat-card" id="card-employees">
+        <div class="stat-icon employees">💼</div>
+        <div class="stat-info">
+          <h3 id="stat-employees-count">0</h3>
+          <p>Active Employees</p>
+        </div>
+      </div>
+
+      <div class="stat-card" id="card-interviews" style="cursor:pointer;">
+        <div class="stat-icon" style="background:rgba(59, 130, 246, 0.12); color:#2563eb;">📅</div>
+        <div class="stat-info">
+          <h3 id="stat-interviews-count">0</h3>
+          <p>Interviews</p>
+        </div>
+      </div>
+
+      <div class="stat-card" id="card-purchases">
+        <div class="stat-icon purchases">🛒</div>
+        <div class="stat-info">
+          <h3 id="stat-purchases-count">0</h3>
+          <p>Total Purchases</p>
+        </div>
+      </div>
+
+      <div class="stat-card" id="card-yellow">
+        <div class="stat-icon warning">⚠️</div>
+        <div class="stat-info">
+          <h3 id="stat-yellow-count">0</h3>
+          <p>Unresponsive (Yellow)</p>
+        </div>
+      </div>
+
+      <div class="stat-card" id="card-red">
+        <div class="stat-icon alert">🚨</div>
+        <div class="stat-info">
+          <h3 id="stat-red-count">0</h3>
+          <p>Critical / Due (Red)</p>
+        </div>
+      </div>
+
+      <div class="stat-card" id="card-archived">
+        <div class="stat-icon archive">📁</div>
+        <div class="stat-info">
+          <h3 id="stat-archived-count">0</h3>
+          <p>Fired & Removed Archive</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button id="tab-trainees" class="tab-btn active">
+        🎓 Trainees <span class="tab-badge" id="badge-trainees-count">0</span>
+      </button>
+      <button id="tab-employees" class="tab-btn">
+        💼 Active Employees <span class="tab-badge" id="badge-employees-count">0</span>
+      </button>
+      <button id="tab-interviews" class="tab-btn">
+        📅 Interviews <span class="tab-badge" id="badge-interviews-count">0</span>
+      </button>
+      <button id="tab-outreach" class="tab-btn">
+        💬 Needs Outreach <span class="tab-badge" id="badge-outreach-count" style="background:#ef4444; color:#fff;">0</span>
+      </button>
+      <button id="tab-purchases" class="tab-btn">
+        🛒 Purchase Tracker <span class="tab-badge" id="badge-purchases-count">0</span>
+      </button>
+      <button id="tab-archived" class="tab-btn">
+        🚫 Fired & Removed <span class="tab-badge" id="badge-archived-count">0</span>
+      </button>
+    </nav>
+
+    <!-- Controls & Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Search by name, email, code, service, notes, staff...">
+      </div>
+
+      <div class="filter-group">
+        <select id="filter-responsiveness" class="select-control">
+          <option value="all">All Statuses / Colors</option>
+          <option value="green">🟢 Normal / Paid / Active</option>
+          <option value="yellow">🟡 Unresponsive (Yellow)</option>
+          <option value="red">🔴 Critical / Due / Alert (Red)</option>
+          <option value="onboarding">📋 Needs Onboarding</option>
+        </select>
+
+        <select id="filter-trainer" class="select-control">
+          <option value="all">All Trainers / Managers</option>
+        </select>
+
+        <select id="filter-position" class="select-control">
+          <option value="all">All Roles / Services</option>
+        </select>
+
+        <!-- Bulk Clear Button for Archived List -->
+        <button id="btn-clear-archived" class="btn btn-sm btn-danger" style="display:none;" title="Permanently delete all fired records">
+          🗑️ Clear All Fired Records
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Directory Table -->
+    <div class="table-container">
+      <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div style="display:flex; align-items:center; gap:0.65rem;">
+          <h2 id="table-title" style="font-size: 1.05rem; font-weight: 700;">Trainees Directory</h2>
+          <span id="table-count-badge" class="badge badge-status" style="font-size:0.75rem; font-weight:700;">Showing 0 of 0</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button id="btn-outreach-all-launch" class="btn btn-sm btn-success" style="display:none; font-weight:700;">
+            ⚡ Select All & Launch AI Outreach
+          </button>
+          <span style="font-size: 0.8rem; color: var(--text-muted)">Color legend: 🔴 Red = Unresponsive / Payment Due | 🟢 Green = Paid / Active</span>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead id="records-thead">
+          <!-- Dynamically populated via app.js -->
+        </thead>
+        <tbody id="records-tbody">
+          <!-- Dynamically populated via app.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Floating Bulk Selection Action Bar -->
+    <div id="bulk-action-bar" class="bulk-action-bar" style="display:none;">
+      <div class="bulk-info">
+        <span class="bulk-badge"><span id="bulk-selected-count">0</span> Selected</span>
+        <span style="font-size:0.8rem; color:var(--text-muted);">Quick Actions:</span>
+      </div>
+      <div class="bulk-buttons">
+        <button id="btn-bulk-outreach" class="btn btn-sm btn-success">
+          💬 AI WhatsApp Outreach
+        </button>
+        <button id="btn-bulk-reports" class="btn btn-sm btn-primary">
+          📄 Generate AI Reports
+        </button>
+        <button id="btn-bulk-deselect" class="btn btn-sm btn-secondary">
+          Deselect All
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- --- MODALS --- -->
+
+  <!-- Modal 1: Add / Edit Person -->
+  <div class="modal-backdrop" id="person-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="person-modal-title">Add New Person</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="person-form">
+        <div class="modal-body">
+          <input type="hidden" id="person-id">
+
+          <!-- Live Duplicate Detection Alert Box -->
+          <div id="person-duplicate-alert" class="duplicate-alert-box" style="display:none;">
+            <!-- Populated live via app.js -->
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-name">Full Name *</label>
+              <input type="text" id="field-name" required placeholder="e.g. John Doe">
+            </div>
+            <div class="form-group">
+              <label for="field-type">Type *</label>
+              <select id="field-type" required>
+                <option value="trainee">Trainee</option>
+                <option value="employee">Active Employee</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-position">Position / Role *</label>
+              <select id="field-position">
+                <option value="Talent Manager">Talent Manager</option>
+                <option value="Lead Coordinator">Lead Coordinator</option>
+                <option value="Video Editor">Video Editor</option>
+                <option value="Graphic Designer">Graphic Designer</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="field-trainer">Trainer</label>
+              <input type="text" id="field-trainer" placeholder="e.g. Aiden Rosenski, Samvel">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-start-date">Start Date</label>
+              <input type="date" id="field-start-date">
+            </div>
+            <div class="form-group">
+              <label for="field-responsiveness">Responsiveness / Status Flag *</label>
+              <select id="field-responsiveness" required>
+                <option value="green">🟢 Normal / Active</option>
+                <option value="yellow">🟡 Unresponsive (Yellow Alert)</option>
+                <option value="red">🔴 Completely Unresponsive (Red Alert)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-email">Email Address</label>
+              <input type="email" id="field-email" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+              <label for="field-phone">Phone Number</label>
+              <input type="text" id="field-phone" placeholder="+1 234 567 890">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-discord">Discord / Alt Contact</label>
+              <input type="text" id="field-discord" placeholder="username#1234 or N/A">
+            </div>
+            <div class="form-group">
+              <label for="field-expected-completion">Expected Completion / Goal</label>
+              <input type="text" id="field-expected-completion" placeholder="e.g. 2 Weeks at most, Ready for Onboarding">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="field-notes">Notes</label>
+            <textarea id="field-notes" rows="3" placeholder="Enter notes or updates..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add / Edit Purchase -->
+  <div class="modal-backdrop" id="purchase-modal">
+    <div class="modal-content" style="max-width: 740px;">
+      <div class="modal-header">
+        <h2 id="purchase-modal-title">Add New Purchase</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="purchase-form">
+        <div class="modal-body">
+          <input type="hidden" id="purchase-id">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-purchase-code">Purchase Code</label>
+              <input type="text" id="field-purchase-code" placeholder="e.g. pi_3TnxowHliS8... or N/A">
+            </div>
+            <div class="form-group">
+              <label for="field-client-name">Client Name *</label>
+              <input type="text" id="field-client-name" required placeholder="Client Full Name">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-client-email">Client Email</label>
+              <input type="email" id="field-client-email" placeholder="client@example.com">
+            </div>
+            <div class="form-group">
+              <label for="field-service">Service *</label>
+              <input type="text" id="field-service" required placeholder="e.g. Promotional Services, Video Editing">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-sold-by">Sold By</label>
+              <input type="text" id="field-sold-by" placeholder="e.g. Damilare Lawal, Seifeldin Gaber, Aiden Rosenski">
+            </div>
+            <div class="form-group">
+              <label for="field-manager">Assigned Manager(s)</label>
+              <input type="text" id="field-manager" placeholder="e.g. Nasya Aiden G. Del Rosario, Dontreal Strong">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-purchase-date">Purchase Date</label>
+              <input type="date" id="field-purchase-date">
+            </div>
+            <div class="form-group">
+              <label for="field-purchase-color">Highlight Color / Status</label>
+              <select id="field-purchase-color" required>
+                <option value="green">🟢 Paid / Green Highlight</option>
+                <option value="red">🔴 Payment Due / Red Highlight</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="field-for-handle">For (YouTube / Handle Tag)</label>
+              <input type="text" id="field-for-handle" placeholder="e.g. sardine, chris2003, overlegen">
+            </div>
+            <div class="form-group">
+              <label for="field-contract">Contract URL</label>
+              <input type="url" id="field-contract" placeholder="https://go.fliplink.me/... or https://pdflink.to/...">
+            </div>
+          </div>
+
+          <!-- Staff Task Delegation (Editors & Designers) -->
+          <div style="background:#f1f5f9; border-radius:8px; padding:0.85rem; margin-bottom:1rem; border:1px solid var(--border-color);">
+            <h4 style="font-size:0.85rem; font-weight:700; margin-bottom:0.65rem; color:#334155;">👥 Staff Task Delegation (Editors & Designers)</h4>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0.5rem;">
+                <label for="field-assigned-editor" style="font-size:0.775rem;">🎬 Assigned Video Editor</label>
+                <input type="text" id="field-assigned-editor" placeholder="e.g. Marc Randrianiaina, Cedric Wayne">
+              </div>
+              <div class="form-group" style="margin-bottom:0.5rem;">
+                <label for="field-editor-task" style="font-size:0.775rem;">Editor Task / Deliverables</label>
+                <input type="text" id="field-editor-task" placeholder="e.g. 5 TikTok Shorts, Minecraft Highlights">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="field-assigned-designer" style="font-size:0.775rem;">🎨 Assigned Graphic Designer</label>
+                <input type="text" id="field-assigned-designer" placeholder="e.g. Designer Name">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="field-designer-task" style="font-size:0.775rem;">Designer Task / Deliverables</label>
+                <input type="text" id="field-designer-task" placeholder="e.g. 3 YouTube Thumbnails, Channel Banner">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dedicated Payment Schedule Box -->
+          <div class="payment-schedule-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <h3 style="font-size:0.95rem; font-weight:700;">💳 Payment Schedule & Installments</h3>
+              <button type="button" id="btn-add-installment" class="btn btn-sm btn-secondary">
+                + Add Payment Date
+              </button>
+            </div>
+
+            <div id="payment-schedule-list">
+              <!-- Dynamically populated installment rows -->
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="field-next-action">Next Action Item</label>
+            <textarea id="field-next-action" rows="2" placeholder="Next action steps, deliverables, campaign timelines..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="field-purchase-notes">Notes & Sales Breakdown</label>
+            <textarea id="field-purchase-notes" rows="3" placeholder="Detailed notes, sales reps, payment breakdown..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Save Purchase</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Quick Payment Schedule Manager Modal -->
+  <div class="modal-backdrop" id="payment-schedule-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Manage Payment Dates: <span id="payment-client-name"></span></h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="quick-payment-summary" style="margin-bottom:1rem; padding:0.75rem; background:#f8fafc; border-radius:8px; display:flex; justify-content:space-between; font-size:0.875rem;">
+          <div>Total: <strong id="summary-total-amount">$0</strong></div>
+          <div>Paid: <strong id="summary-paid-amount" style="color:var(--status-green-text);">$0</strong></div>
+          <div>Remaining Due: <strong id="summary-due-amount" style="color:var(--status-red-text);">$0</strong></div>
+        </div>
+
+        <div id="quick-payment-list">
+          <!-- Dynamically populated milestone status toggle rows -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Log Check-In -->
+  <div class="modal-backdrop" id="checkin-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Log Check-In: <span id="checkin-person-name"></span></h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="checkin-form">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="checkin-by">Checked In By *</label>
+              <input type="text" id="checkin-by" required placeholder="Name of manager/staff logging check-in">
+            </div>
+            <div class="form-group">
+              <label for="checkin-date">Check-In Date *</label>
+              <input type="date" id="checkin-date" required>
+            </div>
+          </div>
+
+          <!-- Manager & Sold By (Shown for Purchases) -->
+          <div id="group-purchase-checkin-fields" style="display:none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="checkin-manager">Assigned Manager</label>
+                <input type="text" id="checkin-manager" placeholder="e.g. Nasya Aiden G. Del Rosario, Aiden Rosenski">
+              </div>
+              <div class="form-group">
+                <label for="checkin-sold-by">Sold By</label>
+                <input type="text" id="checkin-sold-by" placeholder="e.g. Damilare Lawal, Seifeldin Gaber">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="checkin-responsiveness">Current Status / Color Level</label>
+            <select id="checkin-responsiveness" required>
+              <option value="green">🟢 Normal / Responsive / Paid</option>
+              <option value="yellow">🟡 Unresponsive (Needs follow-up)</option>
+              <option value="red">🔴 Completely Unresponsive / Payment Overdue</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="checkin-note">Check-In Note / Progress Updates</label>
+            <textarea id="checkin-note" rows="3" placeholder="Describe progress, deliverables, or payment status during check-in..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Save Check-In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Request Check-In Modal -->
+  <div class="modal-backdrop" id="request-checkin-modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h2>📢 Request Check-In: <span id="request-target-name"></span></h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="request-checkin-form">
+        <div class="modal-body">
+          <input type="hidden" id="request-record-id">
+
+          <div class="form-group">
+            <label for="request-assigned-to">Delegate / Assign Check-In To *</label>
+            <input type="text" id="request-assigned-to" required placeholder="e.g. Aiden Rosenski, Damilare Lawal, Samvel">
+          </div>
+
+          <div class="form-group">
+            <label for="request-by-name">Requested By (Your Name) *</label>
+            <input type="text" id="request-by-name" required placeholder="Your name">
+          </div>
+
+          <div class="form-group">
+            <label for="request-note">Reason / Notes for Manager *</label>
+            <textarea id="request-note" rows="3" required placeholder="Why is a check-in requested? e.g. Unable to reach today, follow up on 2nd payment installment, check lead status..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Check-In Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 6: In-App Confirmation Modal (No Native Popups) -->
+  <div class="modal-backdrop" id="confirm-modal">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header" style="background:#fef2f2; border-bottom: 1px solid #fecaca;">
+        <h2 id="confirm-modal-title" style="color:#b91c1c;">⚠️ Confirm Action</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message" style="font-size:0.9rem; color:var(--text-main); line-height:1.5;">
+          Are you sure you want to proceed with this action?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal" id="btn-confirm-cancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-execute">Confirm Action</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 7: View History & Notes -->
+  <div class="modal-backdrop" id="history-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Check-In History & Notes: <span id="history-person-name"></span></h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="history-list" class="history-timeline">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 8: Cloud DB & Backup Settings -->
+  <div class="modal-backdrop" id="backup-modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h2>Netlify Cloud Database & Backup</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="cloud-status-box" style="margin-bottom:1.25rem; padding:0.85rem 1rem; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; font-size:0.875rem;">
+          <strong>Cloud Sync Status:</strong> <span id="modal-cloud-status-text" style="color:var(--status-green-text); font-weight:700;">🟢 Netlify Serverless Cloud DB Connected</span>
+          <p style="margin-top:0.35rem; color:var(--text-muted); font-size:0.8rem;">
+            All purchases, employees, trainees, and check-ins automatically sync across devices every 10 seconds.
+          </p>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+          <button id="btn-force-push" class="btn btn-primary" style="flex:1;">
+            ⬆️ Push Local Data to Cloud
+          </button>
+          <button id="btn-force-pull" class="btn btn-secondary" style="flex:1;">
+            ⬇️ Pull Fresh Cloud Data
+          </button>
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--border-color); margin:1.25rem 0;">
+
+        <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:0.4rem;">🕒 Automated Rolling Snapshots (Last 10 Backups)</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
+          Every change automatically creates a safe snapshot. If any data was overwritten, rollback in 1 click:
+        </p>
+        <div id="snapshot-history-list" class="snapshot-list" style="max-height:160px; overflow-y:auto; margin-bottom:1rem;">
+          <!-- Dynamically populated via app.js -->
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1.25rem;">
+
+        <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:0.75rem;">File Export & Import</h3>
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+          <button id="btn-export-json" class="btn btn-secondary" style="justify-content: flex-start;">
+            📥 Download JSON Backup File
+          </button>
+
+          <button id="btn-import-json" class="btn btn-secondary" style="justify-content: flex-start;">
+            📤 Upload JSON Backup File
+          </button>
+          <input type="file" id="import-file-input" accept=".json" style="display:none;">
+
+          <button id="btn-reset-seed" class="btn btn-danger" style="justify-content: flex-start; margin-top:0.5rem;">
+            🗑️ Clear Database (Start Empty)
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 9: AI WhatsApp Outreach Campaign Manager -->
+  <div class="modal-backdrop" id="ai-outreach-modal">
+    <div class="modal-content" style="max-width: 820px;">
+      <div class="modal-header">
+        <h2>💬 AI WhatsApp Outreach Campaign</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <strong style="color:#15803d; font-size:0.875rem;">🤖 Powered by LM Studio AI via Ngrok</strong>
+              <p style="color:#166534; font-size:0.8rem; margin-top:2px;">
+                Generates personalized WhatsApp messages for each employee based on their history, notes, and responsiveness status.
+              </p>
+            </div>
+            <button id="btn-open-ai-settings-from-outreach" class="btn btn-sm btn-secondary" style="font-size:0.75rem;">
+              ⚙️ AI Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Recipients List -->
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="font-weight:700; display:flex; justify-content:space-between;">
+            <span>Selected Recipients (<span id="ai-outreach-recipient-count">0</span>)</span>
+            <span id="ai-outreach-role-breakdown" style="font-size:0.75rem; color:var(--text-muted);"></span>
+          </label>
+          <div id="ai-outreach-recipient-chips" class="recipient-chips-container">
+            <!-- Dynamically populated chips -->
+          </div>
+        </div>
+
+        <!-- Manager Outreach Goal Prompt -->
+        <div class="form-row" style="margin-bottom:1rem;">
+          <div class="form-group" style="flex:2;">
+            <label for="ai-outreach-prompt" style="font-weight:700;">What are you reaching out for? (Manager's Prompt) *</label>
+            <textarea id="ai-outreach-prompt" rows="3" placeholder="e.g. Check in on missing training homework from yesterday, ask why they missed the 2 PM sync, and warn them about attendance..."></textarea>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label for="ai-outreach-tone" style="font-weight:700;">Message Tone</label>
+            <select id="ai-outreach-tone" class="select-control" style="width:100%;">
+              <option value="professional">Professional & Direct</option>
+              <option value="urgent">🚨 Urgent Warning (Attendance/Unresponsive)</option>
+              <option value="casual">Friendly & Approachable</option>
+              <option value="onboarding">📋 Onboarding Next Steps</option>
+            </select>
+            <button id="btn-generate-outreach" class="btn btn-primary" style="width:100%; margin-top:0.75rem; justify-content:center;">
+              ✨ Generate Messages
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div id="ai-outreach-progress" style="display:none; margin-bottom:1rem; padding:0.75rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:0.825rem; color:#1e40af;">
+          <span id="ai-outreach-progress-text">Generating messages with LM Studio...</span>
+        </div>
+
+        <!-- Generated Messages Container -->
+        <div id="ai-outreach-results-section" style="display:none;">
+          <!-- Rapid Step-Through Dispatcher Bar -->
+          <div id="rapid-dispatch-bar" style="background:#1e293b; color:white; border-radius:8px; padding:0.85rem 1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; font-weight:700;">🚀 Rapid Bulk Dispatcher</span>
+              <div id="rapid-dispatch-target-text" style="font-size:0.9rem; font-weight:700; color:white; margin-top:2px;">
+                Ready to dispatch (0 / 0)
+              </div>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button type="button" id="btn-rapid-send-next" class="btn btn-sm btn-success" style="font-weight:700;">
+                📲 Open & Advance Next →
+              </button>
+              <button type="button" id="btn-rapid-skip-next" class="btn btn-sm btn-secondary">
+                ⏭️ Skip
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <h3 style="font-size:0.95rem; font-weight:700;">📲 All Generated Messages (<span id="ai-outreach-results-count">0</span>)</h3>
+            <div style="font-size:0.775rem; color:var(--text-muted);">
+              Edit messages below or click "Open & Advance Next" above.
+            </div>
+          </div>
+          <div id="ai-outreach-cards-list" class="outreach-cards-list">
+            <!-- Dynamically populated cards -->
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 10: AI Performance Report Viewer -->
+  <div class="modal-backdrop" id="ai-report-modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2>📄 AI Employee Performance Report</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <h3 id="ai-report-person-name" style="font-size:1.1rem; font-weight:700;">Employee Name</h3>
+            <span id="ai-report-person-meta" style="font-size:0.8rem; color:var(--text-muted);">Position • Trainer</span>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button id="btn-regenerate-report" class="btn btn-sm btn-secondary">
+              🔄 Regenerate
+            </button>
+            <button id="btn-copy-report" class="btn btn-sm btn-secondary">
+              📋 Copy Report
+            </button>
+            <button id="btn-save-report-history" class="btn btn-sm btn-success">
+              💾 Save to Check-In History
+            </button>
+          </div>
+        </div>
+
+        <div id="ai-report-loading" style="display:none; text-align:center; padding:2.5rem 1rem;">
+          <div style="font-size:2rem; margin-bottom:0.5rem;">🤖</div>
+          <p style="font-weight:600; color:var(--text-main);">LM Studio is analyzing check-in history and performance metrics...</p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">Synthesizing attendance, responsiveness, and actionable recommendations.</p>
+        </div>
+
+        <div id="ai-report-content" class="ai-report-paper">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 11: LM Studio & AI Configuration -->
+  <div class="modal-backdrop" id="ai-settings-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>🤖 LM Studio AI Settings</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="ai-settings-status-box" style="margin-bottom:1.25rem; padding:0.85rem 1rem; border-radius:8px; background:#f8fafc; border:1px solid var(--border-color); font-size:0.875rem;">
+          <strong>LM Studio Status:</strong> <span id="ai-modal-status-text" style="font-weight:700;">Checking...</span>
+          <p id="ai-modal-model-text" style="margin-top:0.35rem; color:var(--text-muted); font-size:0.8rem;">
+            Model: Detecting...
+          </p>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="ai-endpoint-input" style="font-weight:700;">LM Studio Ngrok Tunnel URL *</label>
+          <input type="text" id="ai-endpoint-input" placeholder="https://strangely-disarray-diary.ngrok-free.dev" value="https://strangely-disarray-diary.ngrok-free.dev">
+          <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">
+            Default Ngrok tunnel: <code>https://strangely-disarray-diary.ngrok-free.dev</code> (routes to local <code>http://localhost:1234</code>).
+          </small>
+        </div>
+
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+          <button id="btn-test-ai-connection" class="btn btn-primary" style="flex:1;">
+            🔌 Test Connection
+          </button>
+          <button id="btn-set-default-ngrok" class="btn btn-secondary">
+            Reset to Ngrok Default
+          </button>
+          <button id="btn-set-localhost" class="btn btn-secondary">
+            Set to Localhost
+          </button>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; padding:0.75rem; font-size:0.8rem; color:var(--text-muted);">
+          <strong>💡 Tips for Remote Team Members (e.g. USA):</strong>
+          <ul style="margin-top:4px; padding-left:1.25rem; list-style-type:disc;">
+            <li><strong>Serverless AI Proxy:</strong> The app routes through Netlify's serverless AI proxy to eliminate browser CORS blocks across different countries.</li>
+            <li><strong>1-Time Direct Authorization:</strong> If testing direct connection, open <a href="https://strangely-disarray-diary.ngrok-free.dev" target="_blank" style="color:var(--primary-color); font-weight:700; text-decoration:underline;">strangely-disarray-diary.ngrok-free.dev</a> in your browser once and click <strong>"Visit Site"</strong>.</li>
+            <li><strong>Host PC Requirement:</strong> Kevin's computer must be awake with LM Studio running on port 1234 and <code>ngrok http 1234</code> running.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 12: Add / Edit Interview Candidate -->
+  <div class="modal-backdrop" id="interview-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="interview-modal-title">Schedule Candidate Interview</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="interview-form">
+        <div class="modal-body">
+          <input type="hidden" id="interview-id">
+
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="field-candidate-name">Candidate Full Name *</label>
+              <input type="text" id="field-candidate-name" required placeholder="e.g., Alexander Wright">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-position">Applied Position / Role *</label>
+              <input type="text" id="field-candidate-position" required placeholder="e.g., Video Editor, Graphic Designer">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-interviewer">Assigned Interviewer / Manager</label>
+              <select id="field-candidate-interviewer">
+                <option value="Aiden Rosenski">Aiden Rosenski</option>
+                <option value="Ray Weakley">Ray Weakley</option>
+                <option value="Evan Hernandez">Evan Hernandez</option>
+                <option value="Damilare Lawal">Damilare Lawal</option>
+                <option value="Nasya Aiden G. Del Rosario">Nasya Aiden G. Del Rosario</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="field-interview-date">Interview Date & Time *</label>
+              <input type="datetime-local" id="field-interview-date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="field-interview-status">Interview Status</label>
+              <select id="field-interview-status">
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Passed">Passed (Ready for Trainee)</option>
+                <option value="Rescheduled">Rescheduled</option>
+                <option value="No Show">No Show</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-email">Candidate Email</label>
+              <input type="email" id="field-candidate-email" placeholder="applicant@example.com">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-phone">Candidate Phone (WhatsApp)</label>
+              <input type="text" id="field-candidate-phone" placeholder="e.g., 254712345678 or +1234567890">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-portfolio">Portfolio / Resume / Drive Link</label>
+              <input type="url" id="field-candidate-portfolio" placeholder="https://drive.google.com/... or Behance link">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-color">Status Color Indicator</label>
+              <select id="field-candidate-color">
+                <option value="green">🟢 Confirmed / Ready / Normal</option>
+                <option value="yellow">🟡 Pending Confirmation / Follow-up</option>
+                <option value="red">🔴 No Show / Urgent Issue</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="field-candidate-notes">Assessment & Interview Notes</label>
+              <textarea id="field-candidate-notes" rows="3" placeholder="Portfolio review notes, candidate background, interview impressions..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-interview">Schedule Interview</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 13: Convert Candidate to Trainee -->
+  <div class="modal-backdrop" id="convert-trainee-modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2>🎓 Convert Candidate to Trainee</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:1rem; color:var(--text-main);">
+          Convert <strong id="convert-candidate-name">Candidate</strong> into an active Trainee in the training pipeline?
+        </p>
+        <div class="form-group">
+          <label for="convert-assigned-trainer" style="font-weight:700;">Assign Trainer *</label>
+          <select id="convert-assigned-trainer" class="select-control" style="width:100%;">
+            <option value="Aiden Rosenski">Aiden Rosenski</option>
+            <option value="Ray Weakley">Ray Weakley</option>
+            <option value="Evan Hernandez">Evan Hernandez</option>
+            <option value="Damilare Lawal">Damilare Lawal</option>
+            <option value="Nasya Aiden G. Del Rosario">Nasya Aiden G. Del Rosario</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="btn-confirm-convert-trainee">🎓 Confirm & Convert</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/seedData.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/aiService.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
