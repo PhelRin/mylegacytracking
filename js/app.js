@@ -605,8 +605,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (btnOutreachAllLaunch) btnOutreachAllLaunch.style.display = "none";
     } else if (currentTab === "interviews") {
       records = window.store.getInterviews();
-      tabLabel = "Interviews";
-      tableTitle.textContent = "📅 Candidate Interviews Schedule";
+      tabLabel = "Meetings & Interviews";
+      tableTitle.textContent = "📅 Meetings & Interviews Schedule";
       renderInterviewTableHead();
       if (btnOutreachAllLaunch) btnOutreachAllLaunch.style.display = "none";
     } else if (currentTab === "outreach") {
@@ -646,6 +646,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         (r.soldBy && r.soldBy.toLowerCase().includes(searchQuery)) ||
         (r.assignedEditor && r.assignedEditor.toLowerCase().includes(searchQuery)) ||
         (r.assignedDesigner && r.assignedDesigner.toLowerCase().includes(searchQuery)) ||
+        (r.interviewer && r.interviewer.toLowerCase().includes(searchQuery)) ||
+        (r.position && r.position.toLowerCase().includes(searchQuery)) ||
+        (r.meetingType && r.meetingType.toLowerCase().includes(searchQuery)) ||
+        (r.meetingLink && r.meetingLink.toLowerCase().includes(searchQuery)) ||
         (r.forHandle && r.forHandle.toLowerCase().includes(searchQuery));
 
       let matchResponsiveness = true;
@@ -657,6 +661,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const matchTrainer = trainerFilter === "all" ||
         r.trainer === trainerFilter ||
+        (r.interviewer && r.interviewer.toLowerCase().includes(trainerFilter.toLowerCase())) ||
         (r.manager && r.manager.toLowerCase().includes(trainerFilter.toLowerCase())) ||
         (r.promotionalManager && r.promotionalManager.toLowerCase().includes(trainerFilter.toLowerCase())) ||
         (r.soldBy && r.soldBy.toLowerCase().includes(trainerFilter.toLowerCase()));
@@ -669,7 +674,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           const designerMatch = positionFilter === "Graphic Designer" && (Boolean(r.assignedDesigner) || (r.service && r.service.toLowerCase().includes("design")));
           matchPosition = serviceMatch || editorMatch || designerMatch;
         } else {
-          matchPosition = r.position === positionFilter || (r.service && r.service.toLowerCase().includes(positionFilter.toLowerCase()));
+          matchPosition = r.position === positionFilter ||
+            (r.meetingType && r.meetingType.toLowerCase().includes(positionFilter.toLowerCase())) ||
+            (r.service && r.service.toLowerCase().includes(positionFilter.toLowerCase()));
         }
       }
 
@@ -789,9 +796,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         <th style="width: 38px; text-align:center;">
           <input type="checkbox" id="th-select-all" class="row-select-checkbox" ${isAllSelected ? 'checked' : ''} title="Select All in Current View">
         </th>
-        <th style="width: 25%;">Candidate & Role</th>
-        <th style="width: 22%;">Interview Schedule & Status</th>
-        <th style="width: 28%;">Interviewer & Contact</th>
+        <th style="width: 25%;">Meeting / Candidate & Topic</th>
+        <th style="width: 25%;">Schedule, Status & Meet Link</th>
+        <th style="width: 25%;">Host / Lead & Contact</th>
         <th style="width: 25%;">Actions</th>
       </tr>
     `;
@@ -1084,11 +1091,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       let statusBadgeColor = "badge-status";
       if (r.interviewStatus === "Passed") statusBadgeColor = "badge-role-designer";
       else if (r.interviewStatus === "Completed") statusBadgeColor = "badge-role-editor";
-      else if (r.interviewStatus === "Rejected" || r.interviewStatus === "No Show") statusBadgeColor = "badge-role-talent";
+      else if (r.interviewStatus === "Rejected" || r.interviewStatus === "No Show" || r.interviewStatus === "Cancelled") statusBadgeColor = "badge-role-talent";
 
       const cleanPhone = (r.phone || "").replace(/[^0-9]/g, "");
       const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
       const portfolioUrl = r.portfolioUrl ? r.portfolioUrl : null;
+      const meetingLink = (r.meetingLink || "").trim();
+      const meetingType = r.meetingType || "Candidate Interview";
+
+      let typeBadge = `<span class="badge" style="background:#ede9fe; color:#5b21b6; border:1px solid #ddd6fe; font-size:0.725rem;">🎓 Candidate Interview</span>`;
+      if (meetingType === "Client Meeting") {
+        typeBadge = `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-size:0.725rem;">💼 Client Meeting</span>`;
+      } else if (meetingType === "Team / Internal Meeting") {
+        typeBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:0.725rem;">👥 Team Meeting</span>`;
+      } else if (meetingType === "General Meeting") {
+        typeBadge = `<span class="badge" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:0.725rem;">📅 Meeting</span>`;
+      }
 
       return `
         <tr class="status-${rowColor} ${isSelected ? 'row-selected' : ''}">
@@ -1099,11 +1117,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">
               ${escapeHtml(r.name)}
             </div>
-            <div style="display:flex; align-items:center; gap:0.4rem; margin-top:0.2rem; flex-wrap:wrap;">
-              <span class="badge badge-role-manager" style="font-size:0.75rem;">${escapeHtml(r.position || 'Applicant')}</span>
+            <div style="display:flex; align-items:center; gap:0.4rem; margin-top:0.25rem; flex-wrap:wrap;">
+              ${typeBadge}
+              <span class="badge badge-role-manager" style="font-size:0.75rem;">${escapeHtml(r.position || 'Topic / Role')}</span>
               ${portfolioUrl ? `
-                <a href="${escapeHtml(portfolioUrl)}" target="_blank" class="badge" style="background:#e0f2fe; color:#0369a1; text-decoration:none; font-size:0.7rem;">
-                  🔗 Portfolio / Drive
+                <a href="${escapeHtml(portfolioUrl)}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#e0f2fe; color:#0369a1; text-decoration:none; font-size:0.7rem;">
+                  🔗 Docs / Drive
                 </a>
               ` : ''}
             </div>
@@ -1118,16 +1137,29 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem;">
               📅 ${escapeHtml(formattedDate)}
             </div>
-            <div style="margin-top: 0.3rem;">
+            <div style="margin-top: 0.3rem; display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
               <span class="badge ${statusBadgeColor}" style="font-size:0.75rem;">
                 ${escapeHtml(r.interviewStatus || 'Scheduled')}
               </span>
             </div>
+            ${meetingLink ? `
+              <div style="margin-top: 0.45rem;">
+                <a href="${escapeHtml(meetingLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-meet" style="font-size:0.75rem; padding:3px 9px;" title="Join Google Meet / Meeting Call">
+                  🎥 Join Google Meet
+                </a>
+              </div>
+            ` : `
+              <div style="margin-top: 0.35rem;">
+                <button class="btn btn-sm btn-secondary" onclick="openInterviewModal('${r.id}')" style="font-size:0.7rem; padding:2px 7px; color:var(--text-muted); opacity:0.85;" title="Attach Google Meet Link">
+                  + Add Meet Link
+                </button>
+              </div>
+            `}
           </td>
 
           <td>
             <div style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">
-              👤 Interviewer: ${escapeHtml(r.interviewer || 'Management')}
+              👤 Host: ${escapeHtml(r.interviewer || 'Management')}
             </div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
               ✉️ ${escapeHtml(r.email || 'No email')}
@@ -1146,13 +1178,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           <td>
             <div style="display:flex; gap:0.35rem; flex-wrap:wrap; align-items:center;">
-              <button class="btn btn-sm btn-success" onclick="openConvertTraineeModal('${r.id}')" title="Passed interview? Convert directly to Trainee">
-                🎓 Convert to Trainee
-              </button>
-              <button class="btn btn-sm btn-secondary" onclick="openInterviewModal('${r.id}')" title="Edit Interview Details">
+              ${(meetingType === "Candidate Interview" || !r.meetingType) ? `
+                <button class="btn btn-sm btn-success" onclick="openConvertTraineeModal('${r.id}')" title="Passed candidate interview? Convert directly to Trainee">
+                  🎓 Convert to Trainee
+                </button>
+              ` : ''}
+              <button class="btn btn-sm btn-secondary" onclick="openInterviewModal('${r.id}')" title="Edit Meeting Details">
                 ✏️ Edit
               </button>
-              <button class="btn btn-sm btn-danger" onclick="archiveRecord('${r.id}')" title="Archive or Reject Candidate">
+              <button class="btn btn-sm btn-danger" onclick="archiveRecord('${r.id}')" title="Archive Meeting">
                 📁 Archive
               </button>
             </div>
@@ -1618,27 +1652,42 @@ document.addEventListener("DOMContentLoaded", async () => {
       const record = window.store.getRecordById(id);
       if (!record) return;
 
-      titleEl.textContent = `Edit Interview: ${record.name}`;
+      titleEl.textContent = `Edit Meeting / Interview: ${record.name}`;
       saveBtn.textContent = "Save Changes";
       idInput.value = id;
+
+      const typeSelect = document.getElementById("field-meeting-type");
+      if (typeSelect) typeSelect.value = record.meetingType || "Candidate Interview";
 
       document.getElementById("field-candidate-name").value = record.name || "";
       document.getElementById("field-candidate-position").value = record.position || "";
       document.getElementById("field-candidate-interviewer").value = record.interviewer || "Aiden Rosenski";
       document.getElementById("field-interview-date").value = record.interviewDate || "";
       document.getElementById("field-interview-status").value = record.interviewStatus || "Scheduled";
+
+      const linkInput = document.getElementById("field-meeting-link");
+      if (linkInput) linkInput.value = record.meetingLink || "";
+
       document.getElementById("field-candidate-email").value = record.email || "";
       document.getElementById("field-candidate-phone").value = record.phone || "";
       document.getElementById("field-candidate-portfolio").value = record.portfolioUrl || "";
       document.getElementById("field-candidate-color").value = record.responsiveness || "green";
       document.getElementById("field-candidate-notes").value = record.notes || "";
     } else {
-      titleEl.textContent = "Schedule Candidate Interview";
-      saveBtn.textContent = "Schedule Interview";
+      titleEl.textContent = "Schedule Meeting / Interview";
+      saveBtn.textContent = "Schedule Meeting";
       idInput.value = "";
       if (interviewForm) interviewForm.reset();
+
+      const typeSelect = document.getElementById("field-meeting-type");
+      if (typeSelect) typeSelect.value = "Candidate Interview";
+
       document.getElementById("field-candidate-interviewer").value = "Aiden Rosenski";
       document.getElementById("field-interview-status").value = "Scheduled";
+
+      const linkInput = document.getElementById("field-meeting-link");
+      if (linkInput) linkInput.value = "";
+
       document.getElementById("field-candidate-color").value = "green";
 
       const d = new Date();
@@ -1661,13 +1710,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     interviewForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const id = document.getElementById("interview-id").value;
+      const typeSelect = document.getElementById("field-meeting-type");
+      const linkInput = document.getElementById("field-meeting-link");
+
       const formData = {
         type: "interview",
+        meetingType: typeSelect ? typeSelect.value : "Candidate Interview",
         name: document.getElementById("field-candidate-name").value.trim(),
         position: document.getElementById("field-candidate-position").value.trim(),
         interviewer: document.getElementById("field-candidate-interviewer").value,
         interviewDate: document.getElementById("field-interview-date").value,
         interviewStatus: document.getElementById("field-interview-status").value,
+        meetingLink: linkInput ? linkInput.value.trim() : "",
         email: document.getElementById("field-candidate-email").value.trim(),
         phone: document.getElementById("field-candidate-phone").value.trim(),
         portfolioUrl: document.getElementById("field-candidate-portfolio").value.trim(),

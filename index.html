@@ -79,8 +79,8 @@
         🔒 Lock
       </button>
 
-      <button id="btn-add-interview" class="btn btn-secondary" title="Schedule Candidate Interview">
-        📅 + Interview
+      <button id="btn-add-interview" class="btn btn-secondary" title="Schedule Meeting or Candidate Interview">
+        📅 + Meeting
       </button>
 
       <button id="btn-add-purchase" class="btn btn-success">
@@ -116,7 +116,7 @@
         <div class="stat-icon" style="background:rgba(59, 130, 246, 0.12); color:#2563eb;">📅</div>
         <div class="stat-info">
           <h3 id="stat-interviews-count">0</h3>
-          <p>Interviews</p>
+          <p>Meetings & Interviews</p>
         </div>
       </div>
 
@@ -162,7 +162,7 @@
         💼 Active Employees <span class="tab-badge" id="badge-employees-count">0</span>
       </button>
       <button id="tab-interviews" class="tab-btn">
-        📅 Interviews <span class="tab-badge" id="badge-interviews-count">0</span>
+        📅 Meetings & Interviews <span class="tab-badge" id="badge-interviews-count">0</span>
       </button>
       <button id="tab-outreach" class="tab-btn">
         💬 Needs Outreach <span class="tab-badge" id="badge-outreach-count" style="background:#ef4444; color:#fff;">0</span>
@@ -874,11 +874,11 @@
     </div>
   </div>
 
-  <!-- Modal 12: Add / Edit Interview Candidate -->
+  <!-- Modal 12: Add / Edit Meeting or Interview -->
   <div class="modal-backdrop" id="interview-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="interview-modal-title">Schedule Candidate Interview</h2>
+        <h2 id="interview-modal-title">Schedule Meeting / Interview</h2>
         <button class="close-btn">&times;</button>
       </div>
       <form id="interview-form">
@@ -886,18 +886,28 @@
           <input type="hidden" id="interview-id">
 
           <div class="form-grid">
-            <div class="form-group full-width">
-              <label for="field-candidate-name">Candidate Full Name *</label>
-              <input type="text" id="field-candidate-name" required placeholder="e.g., Alexander Wright">
+            <div class="form-group">
+              <label for="field-meeting-type">Meeting Category / Type *</label>
+              <select id="field-meeting-type">
+                <option value="Candidate Interview">🎓 Candidate Interview</option>
+                <option value="Client Meeting">💼 Client Meeting / Onboarding</option>
+                <option value="Team / Internal Meeting">👥 Team / Internal Meeting</option>
+                <option value="General Meeting">📅 General Meeting</option>
+              </select>
             </div>
 
             <div class="form-group">
-              <label for="field-candidate-position">Applied Position / Role *</label>
-              <input type="text" id="field-candidate-position" required placeholder="e.g., Video Editor, Graphic Designer">
+              <label for="field-candidate-name">Contact / Participant Full Name *</label>
+              <input type="text" id="field-candidate-name" required placeholder="e.g., Alexander Wright or Client Name">
             </div>
 
             <div class="form-group">
-              <label for="field-candidate-interviewer">Assigned Interviewer / Manager</label>
+              <label for="field-candidate-position">Topic / Role / Purpose *</label>
+              <input type="text" id="field-candidate-position" required placeholder="e.g., Video Editor Interview or Client Onboarding">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-interviewer">Host / Manager / Interviewer</label>
               <select id="field-candidate-interviewer">
                 <option value="Aiden Rosenski">Aiden Rosenski</option>
                 <option value="Ray Weakley">Ray Weakley</option>
@@ -908,35 +918,44 @@
             </div>
 
             <div class="form-group">
-              <label for="field-interview-date">Interview Date & Time *</label>
+              <label for="field-interview-date">Meeting Date & Time *</label>
               <input type="datetime-local" id="field-interview-date" required>
             </div>
 
             <div class="form-group">
-              <label for="field-interview-status">Interview Status</label>
+              <label for="field-interview-status">Meeting Status</label>
               <select id="field-interview-status">
                 <option value="Scheduled">Scheduled</option>
                 <option value="Completed">Completed</option>
-                <option value="Passed">Passed (Ready for Trainee)</option>
+                <option value="Passed">Passed (Candidate Interview)</option>
                 <option value="Rescheduled">Rescheduled</option>
+                <option value="Cancelled">Cancelled</option>
                 <option value="No Show">No Show</option>
                 <option value="Rejected">Rejected</option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="field-candidate-email">Candidate Email</label>
-              <input type="email" id="field-candidate-email" placeholder="applicant@example.com">
+            <div class="form-group full-width">
+              <label for="field-meeting-link">🎥 Google Meet / Meeting Link (URL)</label>
+              <input type="url" id="field-meeting-link" placeholder="https://meet.google.com/xxx-yyyy-zzz or Zoom link">
+              <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:2px;">
+                Paste a Google Meet, Zoom, or video link so team members can join the call in 1 click directly from the list.
+              </small>
             </div>
 
             <div class="form-group">
-              <label for="field-candidate-phone">Candidate Phone (WhatsApp)</label>
+              <label for="field-candidate-email">Email Address</label>
+              <input type="email" id="field-candidate-email" placeholder="contact@example.com">
+            </div>
+
+            <div class="form-group">
+              <label for="field-candidate-phone">Phone / WhatsApp</label>
               <input type="text" id="field-candidate-phone" placeholder="e.g., 254712345678 or +1234567890">
             </div>
 
             <div class="form-group">
-              <label for="field-candidate-portfolio">Portfolio / Resume / Drive Link</label>
-              <input type="url" id="field-candidate-portfolio" placeholder="https://drive.google.com/... or Behance link">
+              <label for="field-candidate-portfolio">Document / Portfolio / Drive Link</label>
+              <input type="url" id="field-candidate-portfolio" placeholder="https://drive.google.com/... or Resume link">
             </div>
 
             <div class="form-group">
@@ -944,19 +963,19 @@
               <select id="field-candidate-color">
                 <option value="green">🟢 Confirmed / Ready / Normal</option>
                 <option value="yellow">🟡 Pending Confirmation / Follow-up</option>
-                <option value="red">🔴 No Show / Urgent Issue</option>
+                <option value="red">🔴 Urgent / No Show / Issue</option>
               </select>
             </div>
 
             <div class="form-group full-width">
-              <label for="field-candidate-notes">Assessment & Interview Notes</label>
-              <textarea id="field-candidate-notes" rows="3" placeholder="Portfolio review notes, candidate background, interview impressions..."></textarea>
+              <label for="field-candidate-notes">Meeting Agenda & Notes</label>
+              <textarea id="field-candidate-notes" rows="3" placeholder="Meeting agenda, candidate impressions, client requirements, action items..."></textarea>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="btn-save-interview">Schedule Interview</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-interview">Schedule Meeting</button>
         </div>
       </form>
     </div>
