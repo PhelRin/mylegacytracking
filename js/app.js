@@ -1186,8 +1186,8 @@ document.addEventListener("DOMContentLoaded", async () => {
               <button class="btn btn-sm btn-secondary" onclick="openInterviewModal('${r.id}')" title="Edit Meeting Details">
                 ✏️ Edit
               </button>
-              <button class="btn btn-sm btn-danger" onclick="archiveRecord('${r.id}')" title="Archive Meeting">
-                📁 Archive
+              <button class="btn btn-sm btn-danger" onclick="deleteMeetingPrompt('${r.id}')" title="Permanently Delete Meeting">
+                🗑️ Delete
               </button>
             </div>
           </td>
@@ -1647,6 +1647,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const titleEl = document.getElementById("interview-modal-title");
     const saveBtn = document.getElementById("btn-save-interview");
     const idInput = document.getElementById("interview-id");
+    const btnDeleteModal = document.getElementById("btn-delete-meeting-modal");
 
     if (id) {
       const record = window.store.getRecordById(id);
@@ -1655,6 +1656,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       titleEl.textContent = `Edit Meeting / Interview: ${record.name}`;
       saveBtn.textContent = "Save Changes";
       idInput.value = id;
+
+      if (btnDeleteModal) {
+        btnDeleteModal.style.display = "inline-flex";
+        btnDeleteModal.onclick = () => {
+          closeModal(interviewModal);
+          deleteMeetingPrompt(id);
+        };
+      }
 
       const typeSelect = document.getElementById("field-meeting-type");
       if (typeSelect) typeSelect.value = record.meetingType || "Candidate Interview";
@@ -1678,6 +1687,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveBtn.textContent = "Schedule Meeting";
       idInput.value = "";
       if (interviewForm) interviewForm.reset();
+
+      if (btnDeleteModal) btnDeleteModal.style.display = "none";
 
       const typeSelect = document.getElementById("field-meeting-type");
       if (typeSelect) typeSelect.value = "Candidate Interview";
@@ -1886,6 +1897,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     );
   };
+
+  window.deleteMeetingPrompt = (id) => {
+    const record = window.store.getRecordById(id);
+    const meetingName = record ? (record.name || record.position || "this meeting") : "this meeting";
+    showConfirmModal(
+      "🗑️ Delete Meeting",
+      `Are you sure you want to permanently delete the meeting with "${meetingName}"? This meeting will be removed completely.`,
+      "Yes, Delete Meeting",
+      async () => {
+        await window.store.deletePermanently(id);
+        selectedRecordIds.delete(id);
+        render();
+      }
+    );
+  };
+
+  window.archiveRecord = window.archiveRecordPrompt;
 
   // Permanent Delete for Archived Records (with in-app modal)
   window.deleteArchivedPermanently = (id) => {

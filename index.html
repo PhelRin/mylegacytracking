@@ -973,9 +973,14 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="btn-save-interview">Schedule Meeting</button>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+          <button type="button" class="btn btn-danger" id="btn-delete-meeting-modal" style="display:none;">
+            🗑️ Delete Meeting
+          </button>
+          <div style="display:flex; gap:0.5rem; margin-left:auto;">
+            <button type="button" class="btn btn-secondary btn-close-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-save-interview">Schedule Meeting</button>
+          </div>
         </div>
       </form>
     </div>
